@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface PointService {
 
+    UserPoint getUserPoint(long id) throws IllegalArgumentException;
 
 }
