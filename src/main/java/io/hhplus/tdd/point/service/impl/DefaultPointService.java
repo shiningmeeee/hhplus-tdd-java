@@ -37,4 +37,17 @@ public class DefaultPointService implements PointService {
         return updatedUserPoint;
     }
 
+    @Override
+    public UserPoint usePoint(long id, long amount) throws IllegalArgumentException {
+
+        UserPoint userPoint = userPointTable.selectById(id);
+        if(userPoint.point() < amount) {
+            throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+        long pointAmountAfterUse = userPoint.point() - amount;
+        UserPoint userPointAfterUse = userPointTable.insertOrUpdate(id, pointAmountAfterUse);
+
+        return userPointAfterUse;
+    }
+
 }

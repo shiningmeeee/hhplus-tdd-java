@@ -61,7 +61,6 @@ public class DefaultPointServiceTest {
         UserPoint emptyUserPoint = UserPoint.empty(id);
         when(userPointTable.selectById(id)).thenReturn(emptyUserPoint);
         
-        //when & then
         //when
         UserPoint userPoint = pointService.getUserPoint(id);
 
@@ -115,5 +114,89 @@ public class DefaultPointServiceTest {
         assertThat(userPoint.point()).isEqualTo(expectedUserPoint.point());
     }
 
+    @Test
+    @DisplayName("포인트를 보유하지 않은 id에 대해 포인트를 사용한다")
+    void givenNoPoint_whenUsePoint_thenThrowException() {
+        // 포인트를 보유하지 않은 id에 대해 포인트를 사용하는 테스트입니다
+
+        //given
+        long id = 1234L;
+        long useAmount = 100L;
+        UserPoint emptyUserPoint = UserPoint.empty(id);
+
+        //when
+        when(userPointTable.selectById(id)).thenReturn(emptyUserPoint);
+
+        //then
+        assertThrows(IllegalArgumentException.class, () -> {
+            pointService.usePoint(id, useAmount);
+        });
+    }
+
+    @Test
+    @DisplayName("포인트를 보유한 id에 대해 포인트를 사용한다 - 잔액이 남는 경우")
+    void givenPointUseAmount_whenUsePoint_thenReturnRemainUserPoint() {
+        // 보유한 포인트를 사용하고 잔액을 반환하는 테스트입니다 - 잔액이 남는 경우
+
+        //given
+        long id = 1234L;
+        long useAmount = 300L;
+        UserPoint asisUserPoint = new UserPoint(id, 1000L, System.currentTimeMillis());
+
+        //when
+        UserPoint expectedUserPoint = new UserPoint(id, asisUserPoint.point() - useAmount , System.currentTimeMillis());
+        when(userPointTable.selectById(id)).thenReturn(asisUserPoint);
+        when(userPointTable.insertOrUpdate(id, expectedUserPoint.point())).thenReturn(expectedUserPoint);
+        UserPoint userPoint = pointService.usePoint(id, useAmount);
+
+        //then
+        assertThat(userPoint).isNotNull();
+        assertThat(userPoint.id()).isEqualTo(id);
+        assertThat(userPoint.point()).isEqualTo(expectedUserPoint.point());
+
+    }
+
+    @Test
+    @DisplayName("포인트를 보유한 id에 대해 포인트를 사용한다 - 잔액이 남지 않는 경우")
+    void givenPointUseAmount_whenUsePoint_thenReturnZeroPoint() {
+        // 보유한 포인트를 사용하고 잔액이 남지 않는 경우에 대한 테스트입니다
+        // id가 없는 경우와 잔액이 남지 않는 경우 selectById() 결과가 동일하기 때문에 사용 후 잔액이 남지 않는 경우를 테스트합니다
+
+        //given
+        long id = 1234L;
+        long useAmount = 1000L;
+        UserPoint asisUserPoint = new UserPoint(id, 1000L, System.currentTimeMillis());
+
+        //when
+        UserPoint expectedUserPoint = new UserPoint(id, asisUserPoint.point() - useAmount , System.currentTimeMillis());
+        when(userPointTable.selectById(id)).thenReturn(asisUserPoint);
+        when(userPointTable.insertOrUpdate(id, expectedUserPoint.point())).thenReturn(expectedUserPoint);
+        UserPoint userPoint = pointService.usePoint(id, useAmount);
+
+        //then
+        assertThat(userPoint).isNotNull();
+        assertThat(userPoint.id()).isEqualTo(id);
+        assertThat(userPoint.point()).isEqualTo(0);
+
+    }
+
+    @Test
+    @DisplayName("id에 대해 보유한 포인트보다 더 많은 포인트 사용을 시도한다")
+    void givenUsePointOverAmount_whenUsePoint_thenThrowException() {
+        // 보유한 포인트보다 더 많은 양을 사용하는 테스트입니다
+
+        //given
+        long id = 1234L;
+        long useAmount = 1000L;
+        UserPoint asisUserPoint = new UserPoint(id, 500L, System.currentTimeMillis());
+
+        //when
+        when(userPointTable.selectById(id)).thenReturn(asisUserPoint);
+
+        //then
+        assertThrows(IllegalArgumentException.class, () -> {
+            pointService.usePoint(id, useAmount);
+        });
+    }
 
 }

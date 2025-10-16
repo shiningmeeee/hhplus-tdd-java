@@ -11,4 +11,6 @@ public interface PointService {
 
     UserPoint chargePoint(long id, long amount);
 
+    UserPoint usePoint(long id, long amount) throws IllegalArgumentException;
+
 }
