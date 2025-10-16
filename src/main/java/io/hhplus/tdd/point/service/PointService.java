@@ -13,4 +13,8 @@ public interface PointService {
 
     UserPoint usePoint(long id, long amount) throws IllegalArgumentException;
 
+    List<PointHistory> getPointHistories(long id);
+
+    PointHistory insertHistory(PointHistory pointHistory);
+
 }

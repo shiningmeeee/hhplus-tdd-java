@@ -50,4 +50,16 @@ public class DefaultPointService implements PointService {
         return userPointAfterUse;
     }
 
+    @Override
+    public List<PointHistory> getPointHistories(long id) {
+        List<PointHistory> pointHistories = pointHistoryTable.selectAllByUserId(id);
+        return pointHistories;
+    }
+
+    @Override
+    public PointHistory insertHistory(PointHistory pointHistory) {
+        PointHistory insertedPointHistory = pointHistoryTable.insert(pointHistory.userId(), pointHistory.amount(), pointHistory.type(), pointHistory.updateMillis());
+        return insertedPointHistory;
+    }
+
 }
