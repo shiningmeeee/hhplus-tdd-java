@@ -23,11 +23,18 @@ public class DefaultPointService implements PointService {
     }
 
     @Override
-    public UserPoint getUserPoint(long id) throws IllegalArgumentException {
+    public UserPoint getUserPoint(long id){
         UserPoint userPoint = userPointTable.selectById(id);
-        if (userPoint == null) {
-            throw new IllegalArgumentException("User not found");
-        }
         return userPoint;
     }
+
+    @Override
+    public UserPoint chargePoint(long id, long amount) {
+        UserPoint userPoint = userPointTable.selectById(id);
+        long updatedPoint = userPoint.point() + amount;
+        UserPoint updatedUserPoint = userPointTable.insertOrUpdate(id, updatedPoint);
+        //pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        return updatedUserPoint;
+    }
+
 }
