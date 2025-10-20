@@ -49,7 +49,7 @@ public class DefaultPointServiceConcurrencyTest {
             CompletableFuture.runAsync(() -> {
                 log.info("{}번 스레드 실행 시작", i);
                 for(int j=0;j<chargesPerThread;j++) {
-                    pointService.chargePoint(id, 100L);
+                    pointService.chargePoint(id, 100L); // 동시성을 고려하지 않은 메소드
                 }
                 log.info("{}번 스레드 실행 완료", i);
             })
@@ -65,39 +65,39 @@ public class DefaultPointServiceConcurrencyTest {
 
     }
 
-    // @Test
-    // @DisplayName("동시성 테스트: 포인트 충전 후 포인트 조회 정상")
-    // void givenSeveralRequests_whenChargePoint_thenReturnRightHistories() {
-    //     // N개 스레드로 포인트 충전 요청을 동시에 보낸 후 race condition이 발생했는지 확인
+    @Test
+    @DisplayName("동시성 테스트: 포인트 충전 후 포인트 조회 정상")
+    void givenSeveralRequests_whenChargePoint_thenReturnRightHistories() {
+        // N개 스레드로 포인트 충전 요청을 동시에 보낸 후 race condition이 발생했는지 확인
 
-    //     //given
-    //     long id = 1234L;
-    //     int threadCount = 5;
-    //     int chargesPerThread = 100;
-        
+        //given
+        // 약 200회 포인트 충전 요청
+        long id = 1234L;
+        int threadCount = 32;
+        int chargesPerThread = 31;
 
-    //     //when
-    //     log.info("동시성 테스트 시작 - {} 스레드, 각각 {}번씩 충전", threadCount, chargesPerThread);
+        //when
+        log.info("동시성 테스트 시작 - {} 스레드, 각각 {}번씩 충전", threadCount, chargesPerThread);
 
-    //     CompletableFuture.allOf(
-    //         IntStream.range(0, threadCount).mapToObj(i -> 
-    //         CompletableFuture.runAsync(() -> {
-    //             log.info("{}번 스레드 실행 시작", i);
-    //             for(int j=0;j<chargesPerThread;j++) {
-    //                 pointService.chargePointConcurrently(id, 100L);
-    //             }
-    //             log.info("{}번 스레드 실행 완료", i);
-    //         })
-    //     ).toArray(CompletableFuture[]::new)
-    //     ).join(); // 모든 작업이 끝날 때까지 대기
+        CompletableFuture.allOf(
+            IntStream.range(0, threadCount).mapToObj(i -> 
+            CompletableFuture.runAsync(() -> {
+                log.info("{}번 스레드 실행 시작", i);
+                for(int j=0;j<chargesPerThread;j++) {
+                    pointService.chargePointConcurrently(id, 100L); // 동시성을 고려한 메소드
+                }
+                log.info("{}번 스레드 실행 완료", i);
+            })
+        ).toArray(CompletableFuture[]::new)
+        ).join(); // 모든 작업이 끝날 때까지 대기
 
-    //     log.info("모든 스레드 작업 완료");
-    //     List<PointHistory> pointHistories = pointService.getPointHistories(id);
+        log.info("모든 스레드 작업 완료");
+        List<PointHistory> pointHistories = pointService.getPointHistories(id);
 
-    //     //then
-    //     log.info("총 히스토리 개수: {}, 예상: {}", pointHistories.size(), threadCount * chargesPerThread);
-    //     assertThat(pointHistories).isNotNull().hasSize(threadCount * 100);
+        //then
+        log.info("총 히스토리 개수: {}, 예상: {}", pointHistories.size(), threadCount * chargesPerThread);
+        assertThat(pointHistories).isNotNull().hasSize(threadCount * chargesPerThread);
 
-    // }
+    }
 
 }
