@@ -33,7 +33,16 @@ public class DefaultPointService implements PointService {
         UserPoint userPoint = userPointTable.selectById(id);
         long updatedPoint = userPoint.point() + amount;
         UserPoint updatedUserPoint = userPointTable.insertOrUpdate(id, updatedPoint);
-        //pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        return updatedUserPoint;
+    }
+
+    @Override
+    public synchronized UserPoint chargePointConcurrently(long id, long amount) {
+        UserPoint userPoint = userPointTable.selectById(id);
+        long updatedPoint = userPoint.point() + amount;
+        UserPoint updatedUserPoint = userPointTable.insertOrUpdate(id, updatedPoint);
+        pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
         return updatedUserPoint;
     }
 

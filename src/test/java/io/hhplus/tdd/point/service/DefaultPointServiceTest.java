@@ -254,6 +254,8 @@ public class DefaultPointServiceTest {
         pointService.insertHistory(chargePointHistory);
         List<PointHistory> pointHistories = pointService.getPointHistories(id);
 
+        System.out.println("pointHistories = " + pointHistories);
+
         //then
         assertThat(pointHistories).isNotNull().hasSize(2);
         assertThat(pointHistories)

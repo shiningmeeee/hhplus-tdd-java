@@ -11,6 +11,8 @@ public interface PointService {
 
     UserPoint chargePoint(long id, long amount);
 
+    UserPoint chargePointConcurrently(long id, long amount);
+
     UserPoint usePoint(long id, long amount) throws IllegalArgumentException;
 
     List<PointHistory> getPointHistories(long id);
