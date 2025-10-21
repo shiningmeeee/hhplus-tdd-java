@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DefaultPointService implements PointService {
 
     private final PointHistoryTable pointHistoryTable;
     private final UserPointTable userPointTable;
+    private final ReentrantLock lock = new ReentrantLock();
 
     public DefaultPointService(UserPointTable userPointTable, PointHistoryTable pointHistoryTable) {
         this.userPointTable = userPointTable;
@@ -39,6 +41,7 @@ public class DefaultPointService implements PointService {
 
     @Override
     public synchronized UserPoint chargePointConcurrently(long id, long amount) {
+        // 기준 데이터를 조회하는 것도 critical section에 포함 - 다른 스레드가 이미 읽은 데이터를 읽어서 업데이트하면 결과가 달라질 수 있음
         UserPoint userPoint = userPointTable.selectById(id);
         long updatedPoint = userPoint.point() + amount;
         UserPoint updatedUserPoint = userPointTable.insertOrUpdate(id, updatedPoint);
@@ -47,7 +50,19 @@ public class DefaultPointService implements PointService {
     }
 
     @Override
-    public UserPoint usePoint(long id, long amount) throws IllegalArgumentException {
+    public UserPoint chargePointConcurrentlyReentrantLock(long id, long amount) {
+        lock.lock();
+        UserPoint userPoint = userPointTable.selectById(id);
+        long updatedPoint = userPoint.point() + amount;
+        UserPoint updatedUserPoint = userPointTable.insertOrUpdate(id, updatedPoint);
+        pointHistoryTable.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        lock.unlock();
+        // 기준 데이터를 조회하는 것도 critical section에 포함 - 다른 스레드가 이미 읽은 데이터를 읽어서 업데이트하면 결과가 달라질 수 있음
+        return updatedUserPoint;
+    }
+
+    @Override
+    public synchronized UserPoint usePoint(long id, long amount) throws IllegalArgumentException {
 
         UserPoint userPoint = userPointTable.selectById(id);
         if(userPoint.point() < amount) {
